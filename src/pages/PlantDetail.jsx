@@ -7,6 +7,7 @@ import { useCart } from '../context/AppContext'
 import PlantCard from '../components/PlantCard'
 import Reveal from '../components/Reveal'
 
+
 export default function PlantDetail() {
   const { id } = useParams()
   const plant = plants.find(p => p.id === Number(id)) || plants[0]

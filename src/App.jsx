@@ -48,7 +48,11 @@ function AppLayout() {
 // AND context hooks (useAuth, useCart) work everywhere including Navbar.
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  }}
+  >
       <AuthProvider>
         <CartProvider>
           <AppLayout />
