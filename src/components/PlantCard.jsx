@@ -1,22 +1,28 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Star, ShoppingCart, Heart } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Star, ShoppingCart, Heart, Check } from 'lucide-react'
 import { useState } from 'react'
+import { useCart } from '../context/AppContext'
 
 export default function PlantCard({ plant, index = 0 }) {
+  const { addItem, items } = useCart()
   const [wished, setWished] = useState(false)
-  const [added, setAdded] = useState(false)
+  const [flash, setFlash]   = useState(false)
+
+  const inCart = items.find(i => i.id === plant.id)
 
   const handleAdd = (e) => {
     e.preventDefault()
-    setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
+    if (!plant.inStock) return
+    addItem(plant, 1)
+    setFlash(true)
+    setTimeout(() => setFlash(false), 1800)
   }
 
   const badgeColors = {
-    green: 'bg-green/20 text-green border-green/30',
-    blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    green:  'bg-green/20 text-green border-green/30',
+    blue:   'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    amber:  'bg-amber-500/20 text-amber-400 border-amber-500/30',
     purple: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   }
 
@@ -25,7 +31,7 @@ export default function PlantCard({ plant, index = 0 }) {
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.23, 1, 0.32, 1] }}
+      transition={{ duration: 0.5, delay: index * 0.07, ease: [0.23, 1, 0.32, 1] }}
     >
       <Link to={`/shop/${plant.id}`} className="block group">
         <div className="card hover:-translate-y-2 cursor-pointer">
@@ -37,7 +43,6 @@ export default function PlantCard({ plant, index = 0 }) {
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               loading="lazy"
             />
-            {/* Gradient overlay on hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-bg-3/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
 
             {/* Badge */}
@@ -55,12 +60,17 @@ export default function PlantCard({ plant, index = 0 }) {
               <Heart size={14} className={wished ? 'text-red-400 fill-red-400' : 'text-slate-400'} />
             </button>
 
-            {/* Out of stock overlay */}
+            {/* Out of stock */}
             {!plant.inStock && (
               <div className="absolute inset-0 bg-bg-3/60 backdrop-blur-[2px] flex items-center justify-center">
-                <span className="text-xs font-semibold text-slate-300 bg-bg-3/80 px-3 py-1.5 rounded-full border border-white/10">
-                  Out of Stock
-                </span>
+                <span className="text-xs font-semibold text-slate-300 bg-bg-3/80 px-3 py-1.5 rounded-full border border-white/10">Out of Stock</span>
+              </div>
+            )}
+
+            {/* In cart indicator */}
+            {inCart && (
+              <div className="absolute bottom-2 right-2 bg-green text-bg text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {inCart.qty} in cart
               </div>
             )}
           </div>
@@ -70,9 +80,7 @@ export default function PlantCard({ plant, index = 0 }) {
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="text-xs text-slate-500 font-medium mb-0.5">{plant.category}</p>
-                <h3 className="font-semibold text-white text-sm leading-tight group-hover:text-green transition-colors">
-                  {plant.name}
-                </h3>
+                <h3 className="font-semibold text-white text-sm leading-tight group-hover:text-green transition-colors">{plant.name}</h3>
               </div>
               <div className="flex flex-col items-end">
                 <span className="text-base font-bold text-white">₹{plant.price.toLocaleString()}</span>
@@ -86,31 +94,38 @@ export default function PlantCard({ plant, index = 0 }) {
             <div className="flex items-center gap-1.5 mb-3">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={11}
-                    className={i < Math.floor(plant.rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}
-                  />
+                  <Star key={i} size={11} className={i < Math.floor(plant.rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-600'} />
                 ))}
               </div>
               <span className="text-xs text-slate-400">{plant.rating} ({plant.reviews})</span>
             </div>
 
             {/* Add to cart */}
-            <button
+            <motion.button
               onClick={handleAdd}
               disabled={!plant.inStock}
+              whileTap={{ scale: 0.97 }}
               className={`w-full text-sm font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 ${
-                added
-                  ? 'bg-green text-bg'
+                flash
+                  ? 'bg-green text-bg shadow-[0_0_18px_rgba(34,197,94,0.4)]'
                   : plant.inStock
                   ? 'bg-white/5 hover:bg-green hover:text-bg border border-white/10 hover:border-transparent text-white'
                   : 'bg-white/5 text-slate-600 cursor-not-allowed border border-white/5'
               }`}
             >
-              <ShoppingCart size={14} />
-              {added ? 'Added to Cart!' : plant.inStock ? 'Add to Cart' : 'Unavailable'}
-            </button>
+              <AnimatePresence mode="wait">
+                {flash ? (
+                  <motion.span key="added" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5">
+                    <Check size={14} strokeWidth={3} /> Added to Cart!
+                  </motion.span>
+                ) : (
+                  <motion.span key="add" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5">
+                    <ShoppingCart size={14} />
+                    {plant.inStock ? 'Add to Cart' : 'Unavailable'}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
       </Link>

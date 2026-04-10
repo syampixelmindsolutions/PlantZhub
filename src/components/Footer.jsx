@@ -17,6 +17,7 @@ const footerLinks = {
     { label: 'Press', to: '/about' },
   ],
   Support: [
+    { label: 'Get a Free Quote', to: '/get-quote' },
     { label: 'Plant Care Guides', to: '/blog' },
     { label: 'Track Order', to: '/contact' },
     { label: 'Returns', to: '/contact' },

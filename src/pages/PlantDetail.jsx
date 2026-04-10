@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Star, ShoppingCart, Heart, ArrowLeft, Check, Leaf, Truck, Shield, RotateCcw } from 'lucide-react'
 import { plants } from '../data/plants'
+import { useCart } from '../context/AppContext'
 import PlantCard from '../components/PlantCard'
 import Reveal from '../components/Reveal'
 
@@ -11,12 +12,14 @@ export default function PlantDetail() {
   const plant = plants.find(p => p.id === Number(id)) || plants[0]
   const related = plants.filter(p => p.id !== plant.id && p.category === plant.category).slice(0, 4)
 
+  const { addItem } = useCart()
   const [activeImg, setActiveImg] = useState(0)
   const [qty, setQty] = useState(1)
   const [wished, setWished] = useState(false)
   const [added, setAdded] = useState(false)
 
   const handleAdd = () => {
+    addItem(plant, qty)
     setAdded(true)
     setTimeout(() => setAdded(false), 2500)
   }
